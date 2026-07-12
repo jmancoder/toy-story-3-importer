@@ -1,10 +1,10 @@
 import bpy
 
 from bpy.types import Context
-from .model_importer import ModelImporter
+from .asset_importer import AssetImporter
 from .psp_mesh_z_reader import PSPMeshZReader
 
-class PSPModelImporter(ModelImporter):
+class PSPAssetImporter(AssetImporter):
     @staticmethod
     def import_mesh_z(context: Context, name: str, file_path: str) -> None:
         with open(file_path, "rb") as f:

@@ -15,8 +15,8 @@ import os
 from bpy_extras.io_utils import ImportHelper
 from bpy.props import CollectionProperty, EnumProperty, StringProperty
 from bpy.types import Operator, Context, OperatorFileListElement
-from .ps2_model_importer import PS2ModelImporter
-from .psp_model_importer import PSPModelImporter
+from .ps2_asset_importer import PS2AssetImporter
+from .psp_asset_importer import PSPAssetImporter
 
 
 class TS3Importer(Operator, ImportHelper):
@@ -47,18 +47,18 @@ class TS3Importer(Operator, ImportHelper):
             file_path = os.path.join(self.directory, file.name)
             if self.platform == 'PSP':
                 if file.name.endswith("Mesh_Z"):
-                    PSPModelImporter.import_mesh_z(context, file.name, file_path)
+                    PSPAssetImporter.import_mesh_z(context, file.name, file_path)
                 if file.name.endswith("Skel_Z"):
-                    PSPModelImporter.import_skel_z(context, file.name, file_path)
+                    PSPAssetImporter.import_skel_z(context, file.name, file_path)
                 if file.name.endswith("MeshData_Z"):
                     pass
             else:
                 if file.name.endswith("Mesh_Z"):
                     pass
                 if file.name.endswith("Skel_Z"):
-                    PS2ModelImporter.import_skel_z(context, file.name, file_path)
+                    PS2AssetImporter.import_skel_z(context, file.name, file_path)
                 if file.name.endswith("MeshData_Z"):
-                    PS2ModelImporter.import_mesh_data_z(context, file.name, file_path)
+                    PS2AssetImporter.import_mesh_data_z(context, file.name, file_path)
 
         return {'FINISHED'}
 

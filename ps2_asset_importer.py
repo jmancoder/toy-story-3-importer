@@ -1,10 +1,10 @@
 import bpy
 
 from bpy.types import Context
-from .model_importer import ModelImporter
+from .asset_importer import AssetImporter
 from .ps2_meshdata_z_reader import PS2MeshDataZReader
 
-class PS2ModelImporter(ModelImporter):
+class PS2AssetImporter(AssetImporter):
     @staticmethod
     def import_mesh_data_z(context: Context, name: str, file_path: str) -> None:
         with open(file_path, "rb") as f:

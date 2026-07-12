@@ -5,7 +5,7 @@ from mathutils import Vector
 from .skel_z_reader import SkelZReader
 
 
-class ModelImporter:
+class AssetImporter:
     @staticmethod
     def import_skel_z(context: Context, name: str, file_path: str) -> None:
         with open(file_path, "rb") as f:
