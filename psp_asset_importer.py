@@ -15,6 +15,24 @@ class PSPAssetImporter(AssetImporter):
             mesh = bpy.data.meshes.new("Mesh")
             mesh.from_pydata(submesh.positions, [], submesh.triangles)
 
+            # Import UVs
+            uv_layer = mesh.uv_layers.new(name=f"UV0")
+            for loop in mesh.loops:
+                uv = submesh.uvs[loop.vertex_index][:2]
+                uv_layer.data[loop.index].uv = (uv[0], 1.0 - uv[1])
+
+            # Import unknown attributes
+            for i in range(4):
+                unk_0_attr = mesh.attributes.new(
+                    name=f"unk_a_{i}", type='INT', domain='POINT')
+                unk_0_attr.data.foreach_set("value",
+                    [col[i] for col in submesh.unks_0])
+                
+                unk_1_attr = mesh.attributes.new(
+                    name=f"unk_b_{i}", type='INT', domain='POINT')
+                unk_1_attr.data.foreach_set("value",
+                    [col[i] for col in submesh.unks_1])
+
             mesh.validate()
             mesh.update()
 

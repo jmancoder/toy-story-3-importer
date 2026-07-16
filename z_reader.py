@@ -29,9 +29,12 @@ class ZReader:
     def read_int32(self) -> int:
         return struct.unpack("<i", self.bs.read(4))[0]
 
-    def read_vec3h(self) -> Vector:
-        x, y, z = struct.unpack("<3h", self.bs.read(6))
-        return Vector((x / 0x7FFF, y / 0x7FFF, z / 0x7FFF))
+    def read_int16_vec(self, axes: int, divisor: int = 0x7FFF) -> tuple[float, ...]:
+        values = struct.unpack(f"<{axes}h", self.bs.read(axes * 2))
+        return tuple([val / divisor for val in values])
+
+    def read_float16_vec(self, axes: int) -> tuple[float, ...]:
+        return struct.unpack(f"<{axes}e", self.bs.read(axes * 2))
 
     def load_data(self, data: bytes) -> None:
         if len(data) < 4:
