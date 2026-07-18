@@ -40,11 +40,11 @@ class PSPMeshZReader(ZReader):
         while i < len(strips) - 2:
             a, b, c = strips[i], strips[i+1], strips[i+2]
 
-            # Handle strip end markers
-            # if a == -1:
-            #     i += 1
-            #     flip = False
-            #     continue
+            # Skip degenerate triangles
+            if a == b or a == c or b == c:
+                i += 1
+                flip = False
+                continue
 
             if flip:
                 indices.append((a, b, c))
@@ -149,9 +149,11 @@ class PSPMeshZReader(ZReader):
                 binormals.append(binormal)
                 positions.append(position)
 
-                strip_indices.append(i)
                 if position == prev_position:
-                    pass
+                    # Store degenerate triangle when vertex position is repeated
+                    strip_indices.append(i - 1)
+                else:
+                    strip_indices.append(i)
 
                 prev_position = position
                 i += 1
