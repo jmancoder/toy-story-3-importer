@@ -10,73 +10,106 @@ bl_info = {
 
 
 import bpy
-import os
 
 from bpy_extras.io_utils import ImportHelper
-from bpy.props import CollectionProperty, EnumProperty, StringProperty
-from bpy.types import Operator, Context, OperatorFileListElement
+from bpy.props import EnumProperty, StringProperty
+from bpy.types import Operator, Context
+from pathlib import Path
 from .ps2_asset_importer import PS2AssetImporter
 from .psp_asset_importer import PSPAssetImporter
 
 
-class TS3Importer(Operator, ImportHelper):
-    bl_idname = "import_scene.ts3_asset"
-    bl_label = "Import Toy Story 3 Asset"
+class SkinnedMeshImporter(Operator, ImportHelper):
+    """Load a Toy Story 3 skinned mesh file."""
+    bl_idname = "import_scene.ts3_skinned_mesh"
+    bl_label = "Import Skin_Z"
+    filename_ext = ".Skin_Z"
 
-    directory: StringProperty(
-        subtype='DIR_PATH', options={'SKIP_SAVE', 'HIDDEN'})
+    filter_glob: StringProperty(
+        default="*.Skin_Z",
+        options={'HIDDEN'},
+        maxlen=255,
+    )
 
-    files: CollectionProperty(
-        type=OperatorFileListElement, options={'SKIP_SAVE', 'HIDDEN'})
-    
     platform: EnumProperty(
         name="Game Platform",
-        description="Whether the files were exported from the PS2 or the PSP version of Toy Story 3",
+        description="Whether the files were exported" \
+            "from the PS2 or the PSP version of Toy Story 3",
         items=(
-            ('PSP', "PSP", "PSP"),
-            ('PS2', "PS2", "PS2"),
+            ('PSP', "PSP", ""),
+            ('PS2', "PS2", ""),
         ),
         default='PSP',
     )
 
     def execute(self, context: Context):
-        if not self.directory:
-            return {'CANCELLED'}
+        in_path = Path(self.filepath)
+        if self.platform == 'PSP':
+            importer = PSPAssetImporter()
+        else:
+            importer = PS2AssetImporter()
 
-        for file in self.files:
-            file_path = os.path.join(self.directory, file.name)
-            if self.platform == 'PSP':
-                if file.name.endswith("Mesh_Z"):
-                    PSPAssetImporter.import_mesh_z(context, file.name, file_path)
-                if file.name.endswith("Skel_Z"):
-                    PSPAssetImporter.import_skel_z(context, file.name, file_path)
-                if file.name.endswith("MeshData_Z"):
-                    pass
-            else:
-                if file.name.endswith("Mesh_Z"):
-                    pass
-                if file.name.endswith("Skel_Z"):
-                    PS2AssetImporter.import_skel_z(context, file.name, file_path)
-                if file.name.endswith("MeshData_Z"):
-                    PS2AssetImporter.import_mesh_data_z(context, file.name, file_path)
+        importer.import_skin_z(context, in_path)
+
+        return {'FINISHED'}
+
+
+class StaticMeshImporter(Operator, ImportHelper):
+    """Load a Toy Story 3 static mesh file."""
+    bl_idname = "import_scene.ts3_static_mesh"
+    bl_label = "Import Mesh_Z"
+    filename_ext = ".Mesh_Z"
+
+    filter_glob: StringProperty(
+        default="*.Mesh_Z",
+        options={'HIDDEN'},
+        maxlen=255,
+    )
+
+    platform: EnumProperty(
+        name="Game Platform",
+        description="Whether the files were exported" \
+            "from the PS2 or the PSP version of Toy Story 3",
+        items=(
+            ('PSP', "PSP", ""),
+            ('PS2', "PS2", ""),
+        ),
+        default='PSP',
+    )
+
+    def execute(self, context: Context):
+        in_path = Path(self.filepath)
+        if self.platform == 'PSP':
+            importer = PSPAssetImporter()
+        else:
+            importer = PS2AssetImporter()
+
+        importer.import_mesh_z(context, in_path)
 
         return {'FINISHED'}
 
 
 def menu_func_import(self, context):
     self.layout.operator(
-        TS3Importer.bl_idname,
-        text="Toy Story 3 Asset"
+        SkinnedMeshImporter.bl_idname,
+        text="TS3 Skinned Mesh (.Skin_Z)"
+    )
+
+    self.layout.operator(
+        StaticMeshImporter.bl_idname,
+        text="TS3 Static Mesh (.Mesh_Z)"
     )
 
 
 def register():
-    bpy.utils.register_class(TS3Importer)
+    bpy.utils.register_class(SkinnedMeshImporter)
+    bpy.utils.register_class(StaticMeshImporter)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
 
 def unregister():
-    bpy.utils.unregister_class(TS3Importer)
+    bpy.utils.unregister_class(SkinnedMeshImporter)
+    bpy.utils.unregister_class(StaticMeshImporter)
     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
 
 

@@ -1,7 +1,7 @@
 import struct
 
 from io import BytesIO
-from mathutils import Matrix, Vector
+from mathutils import Matrix
 
 class ZReader:
     def __init__(self) -> None:
@@ -19,7 +19,7 @@ class ZReader:
 
     def read_uint16(self) -> int:
         return struct.unpack("<H", self.bs.read(2))[0]
-    
+
     def read_int16(self) -> int:
         return struct.unpack("<h", self.bs.read(2))[0]
 
@@ -28,13 +28,6 @@ class ZReader:
 
     def read_int32(self) -> int:
         return struct.unpack("<i", self.bs.read(4))[0]
-
-    def read_int16_vec(self, axes: int, divisor: int = 0x7FFF) -> tuple[float, ...]:
-        values = struct.unpack(f"<{axes}h", self.bs.read(axes * 2))
-        return tuple([val / divisor for val in values])
-
-    def read_float16_vec(self, axes: int) -> tuple[float, ...]:
-        return struct.unpack(f"<{axes}e", self.bs.read(axes * 2))
 
     def load_data(self, data: bytes) -> None:
         if len(data) < 4:
