@@ -1,25 +1,44 @@
 import bpy
 
-from bpy.types import Context, Object
+from bpy.types import Context
 from pathlib import Path
 from .asset_importer import AssetImporter
+from .ps2_skin_z_reader import PS2SkinZReader
+from .ps2_mesh_z_reader import PS2MeshZReader
 from .ps2_mesh_data_z_reader import PS2MeshDataZReader
 
 
 class PS2AssetImporter(AssetImporter):
     def import_skin_z(self, context: Context, file_path: Path) -> None:
-        ...
+        with open(file_path, "rb") as f:
+            reader = PS2SkinZReader()
+            skin_z = reader.read_skin_z(f.read())
 
-    def import_mesh_z(self, context: Context, file_path: Path) -> list[Object]:
-        ...
+        skinned = skin_z.skel_crc != 0
+        if skinned:
+            skel_z_path = file_path.parent / f"{skin_z.skel_crc}.Skel_Z"
+            self.import_skel_z(context, skel_z_path)
+
+        for mesh_crc in skin_z.mesh_crcs:
+            mesh_path = file_path.parent / f"{mesh_crc}.Mesh_Z"
+            self.import_mesh_z(context, mesh_path, skinned)
+
+    def import_mesh_z(self, context: Context,
+            file_path: Path, skinned = False) -> None:
+        with open(file_path, "rb") as f:
+            reader = PS2MeshZReader()
+            mesh_z = reader.read_mesh_z(f.read())
+
+        mesh_data_path = file_path.parent / f"{mesh_z.mesh_data_crc}.MeshData_Z"
+        self.import_mesh_data_z(context, mesh_data_path, skinned)
 
     def import_mesh_data_z(self, context: Context,
-            name: str, file_path: str) -> None:
+            file_path: Path, skinned = False) -> None:
         with open(file_path, "rb") as f:
             reader = PS2MeshDataZReader()
             mesh_data_z = reader.read_mesh_data_z(f.read())
 
-        mesh = bpy.data.meshes.new("Mesh")
+        mesh = bpy.data.meshes.new(str(mesh_data_z.crc))
         mesh.from_pydata(mesh_data_z.positions_0, [], mesh_data_z.triangles)
 
         # Transfer normals from faces to loops
@@ -52,5 +71,12 @@ class PS2AssetImporter(AssetImporter):
         mesh.update()
 
         # Create mesh object
-        mesh_obj = bpy.data.objects.new(name, mesh)
+        mesh_obj = bpy.data.objects.new(str(mesh_data_z.crc), mesh)
         context.collection.objects.link(mesh_obj)
+
+        if not skinned:
+            return
+
+        mesh_obj.parent = self.armature_obj
+        modifier = mesh_obj.modifiers.new("Armature", 'ARMATURE')
+        modifier.object = self.armature_obj

@@ -31,7 +31,7 @@ class SkelZReader(ZReader):
         unk_crc = self.read_int32()
         self.read_uint16()
         self.read_uint16()
-        unk_vec = struct.unpack("<4f", self.bs.read(16))
+        bounds = struct.unpack("<4f", self.bs.read(16))
 
         bone_count = self.read_uint32()
         bones = []

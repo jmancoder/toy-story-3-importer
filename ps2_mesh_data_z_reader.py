@@ -30,9 +30,7 @@ class PS2MeshDataZReader(ZReader):
         mesh_data_flags = self.read_uint32()
         mesh_data_crc = self.read_int32()
         self.read_int32()
-        self.read_int32()
-        self.read_int32()
-        self.read_int32()
+        assert self.read_int32() == 1
 
         # Read vertices
         positions_0 = []

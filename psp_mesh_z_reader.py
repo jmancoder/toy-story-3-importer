@@ -38,7 +38,7 @@ class PSPMeshZReader(ZReader):
         self.read_int32()
         linked_mesh_data_crc = self.read_int32()
 
-        unk_vec = struct.unpack("<4f", self.bs.read(16))
+        bounds = struct.unpack("<4f", self.bs.read(16))
         mesh_transform = self.read_matrix()
         self.read_uint32()
         self.read_int32()
