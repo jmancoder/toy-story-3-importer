@@ -104,7 +104,7 @@ class PSPMeshZReader(ZReader):
                 if weight_raw == (34, 195, 0, 18):
                     # Stop before consistent unknown data at end of vertex buffer
                     break
-                weight = tuple(val / 256 for val in weight_raw)
+                weight = tuple(val / 128 for val in weight_raw)
 
                 x, y = struct.unpack("<2h", self.bs.read(4))
                 uv = ((x / 2048) - 8.0, (y / 2048) - 8.0)

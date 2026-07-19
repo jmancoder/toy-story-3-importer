@@ -5,12 +5,17 @@ from typing import NamedTuple
 from .z_reader import ZReader
 
 
-class PointGroup(NamedTuple):
+class MorphPacket(NamedTuple):
+    vertex_id: int
+    weight: float
+
+
+class MorphGroup(NamedTuple):
     unk_0: int
     unk_1: int
     unk_2: int
-    points_0: list[tuple[int, float]]
-    points_1: list[tuple[int, float]]
+    morph_packets_0: list[MorphPacket]
+    morph_packets_1: list[MorphPacket]
 
 
 class SkinZ(NamedTuple):
@@ -19,7 +24,7 @@ class SkinZ(NamedTuple):
     skel_crc: int
     transform: Matrix
     mesh_crcs: list[int]
-    point_group_map: dict[int, PointGroup]
+    morph_group_map: dict[int, MorphGroup]
 
 
 class PSPSkinZReader(ZReader):
@@ -49,31 +54,31 @@ class PSPSkinZReader(ZReader):
 
         # Read entry groups
         group_count = self.read_uint32()
-        point_group_map = {}
+        morph_group_map = {}
         for _ in range(group_count):
             group_crc = self.read_int32()
             unk_0 = self.read_int16()
             unk_1 = self.read_int16()
             unk_2 = self.read_int16()
 
-            entry_count_0 = self.read_uint32()
-            points_0 = [
-                struct.unpack("<If", self.bs.read(8))
-                for _ in range(entry_count_0)
+            packet_count_0 = self.read_uint32()
+            packets_0 = [
+                MorphPacket(*struct.unpack("<If", self.bs.read(8)))
+                for _ in range(packet_count_0)
             ]
 
-            entry_count_1 = self.read_uint32()
-            points_1 = [
-                struct.unpack("<If", self.bs.read(8))
-                for _ in range(entry_count_1)
+            packet_count_1 = self.read_uint32()
+            packets_1 = [
+                MorphPacket(*struct.unpack("<If", self.bs.read(8)))
+                for _ in range(packet_count_1)
             ]
 
-            point_group_map[group_crc] = PointGroup(
+            morph_group_map[group_crc] = MorphGroup(
                 unk_0,
                 unk_1,
                 unk_2,
-                points_0,
-                points_1,
+                packets_0,
+                packets_1,
             )
 
         return SkinZ(
@@ -82,5 +87,5 @@ class PSPSkinZReader(ZReader):
             skel_crc,
             skin_transform,
             mesh_crcs,
-            point_group_map,
+            morph_group_map,
         )

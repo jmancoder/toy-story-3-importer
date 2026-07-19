@@ -1,6 +1,6 @@
 import bpy
 
-from bpy.types import Context, Object
+from bpy.types import Context
 from pathlib import Path
 from .asset_importer import AssetImporter
 from .psp_mesh_z_reader import PSPMeshZReader
