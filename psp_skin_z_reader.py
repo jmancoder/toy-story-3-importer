@@ -6,7 +6,6 @@ from .z_reader import ZReader
 
 
 class PointGroup(NamedTuple):
-    crc: int
     unk_0: int
     unk_1: int
     unk_2: int
@@ -20,7 +19,7 @@ class SkinZ(NamedTuple):
     skel_crc: int
     transform: Matrix
     mesh_crcs: list[int]
-    point_groups: list[PointGroup]
+    point_group_map: dict[int, PointGroup]
 
 
 class PSPSkinZReader(ZReader):
@@ -50,7 +49,7 @@ class PSPSkinZReader(ZReader):
 
         # Read entry groups
         group_count = self.read_uint32()
-        point_groups = []
+        point_group_map = {}
         for _ in range(group_count):
             group_crc = self.read_int32()
             unk_0 = self.read_int16()
@@ -69,14 +68,13 @@ class PSPSkinZReader(ZReader):
                 for _ in range(entry_count_1)
             ]
 
-            point_groups.append(PointGroup(
-                group_crc,
+            point_group_map[group_crc] = PointGroup(
                 unk_0,
                 unk_1,
                 unk_2,
                 points_0,
                 points_1,
-            ))
+            )
 
         return SkinZ(
             skin_flags,
@@ -84,5 +82,5 @@ class PSPSkinZReader(ZReader):
             skel_crc,
             skin_transform,
             mesh_crcs,
-            point_groups,
+            point_group_map,
         )

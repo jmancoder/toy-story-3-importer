@@ -15,37 +15,23 @@ class PSPAssetImporter(AssetImporter):
             reader = PSPSkinZReader()
             self.skin_z = reader.read_skin_z(f.read())
 
-        # Create skeleton (armature) object
-        skel_obj = self.import_skel_z(context,
+        self.import_skel_z(context,
             file_path.parent / f"{str(self.skin_z.skel_crc)}.Skel_Z")
 
-        for group in self.skin_z.point_groups:
-            ids_0 = [group.points_0[i][0] for i in range(len(group.points_0))]
-            ids_1 = [group.points_1[i][0] for i in range(len(group.points_1))]
-            print(max(ids_0), max(ids_1))
-
-        # Create mesh objects
         for mesh_crc in self.skin_z.mesh_crcs:
-            mesh_objs = self.import_mesh_z(context,
-                file_path.parent / f"{str(mesh_crc)}.Mesh_Z")
-            for mesh_obj in mesh_objs:
-                mesh_obj.parent = skel_obj
+            self.import_mesh_z(
+                context,
+                file_path.parent / f"{str(mesh_crc)}.Mesh_Z",
+                skinned=True
+            )
 
-                modifier = mesh_obj.modifiers.new("Armature", 'ARMATURE')
-                modifier.object = skel_obj
-
-                vertex_groups = [
-                    mesh_obj.vertex_groups.new(name=str(bone.crc))
-                    for bone in self.skel_z.bones
-                ]
-
-    def import_mesh_z(self, context: Context, file_path: Path) -> list[Object]:
+    def import_mesh_z(self, context: Context,
+            file_path: Path, skinned=False) -> None:
         with open(file_path, "rb") as f:
             reader = PSPMeshZReader()
             mesh_z = reader.read_mesh_z(f.read())
 
-        mesh_objs = []
-        for submesh in mesh_z.submeshes:
+        for i, submesh in enumerate(mesh_z.submeshes):
             mesh = bpy.data.meshes.new(str(mesh_z.crc))
             mesh.from_pydata(submesh.positions, [], submesh.triangles)
 
@@ -61,6 +47,24 @@ class PSPAssetImporter(AssetImporter):
             mesh_obj = bpy.data.objects.new(str(mesh_z.crc), mesh)
             mesh_obj.matrix_basis = submesh.transform
             context.collection.objects.link(mesh_obj)
-            mesh_objs.append(mesh_obj)
 
-        return mesh_objs
+            if not skinned:
+                return
+
+            mesh_obj.parent = self.armature_obj
+            modifier = mesh_obj.modifiers.new("Armature", 'ARMATURE')
+            modifier.object = self.armature_obj
+
+            for j, bone_crc in enumerate(submesh.bone_crcs):
+                if bone_crc == -1:
+                    continue
+
+                skin_group = self.skin_z.point_group_map[bone_crc]
+                vertex_group = mesh_obj.vertex_groups.new(name=str(bone_crc))
+
+                ids_0 = [skin_group.points_0[i][0] for i in range(len(skin_group.points_0))]
+                ids_1 = [skin_group.points_1[i][0] for i in range(len(skin_group.points_1))]
+                print(f"Mesh {i}, bone {j} skin groups len, range:")
+                print(len(skin_group.points_0), f"{min(ids_0)}-{max(ids_0)}")
+                print(len(skin_group.points_1), f"{min(ids_1)}-{max(ids_1)}")
+            print()

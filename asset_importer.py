@@ -8,9 +8,10 @@ from .skel_z_reader import SkelZReader, SkelZ
 
 class AssetImporter:
     def __init__(self) -> None:
+        self.armature_obj: Object
         self.skel_z: SkelZ
 
-    def import_skel_z(self, context: Context, file_path: Path) -> Object:
+    def import_skel_z(self, context: Context, file_path: Path) -> None:
         with open(file_path, "rb") as f:
             reader = SkelZReader()
             skel_z = reader.read_skel_z(f.read())
@@ -35,6 +36,7 @@ class AssetImporter:
                 armature.edit_bones[i].parent = armature.edit_bones[bone_data.parent_id]
 
         bpy.ops.object.mode_set(mode="OBJECT")
-        self.skel_z = skel_z
 
-        return armature_obj
+        self.skel_z = skel_z
+        self.armature_obj = armature_obj
+
