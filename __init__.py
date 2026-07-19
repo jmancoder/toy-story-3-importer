@@ -33,7 +33,7 @@ class SkinnedMeshImporter(Operator, ImportHelper):
 
     platform: EnumProperty(
         name="Game Platform",
-        description="Whether the files were exported" \
+        description="Whether the files were exported " \
             "from the PS2 or the PSP version of Toy Story 3",
         items=(
             ('PSP', "PSP", ""),
@@ -68,7 +68,7 @@ class StaticMeshImporter(Operator, ImportHelper):
 
     platform: EnumProperty(
         name="Game Platform",
-        description="Whether the files were exported" \
+        description="Whether the files were exported " \
             "from the PS2 or the PSP version of Toy Story 3",
         items=(
             ('PSP', "PSP", ""),
