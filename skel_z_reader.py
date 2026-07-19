@@ -38,8 +38,8 @@ class SkelZReader(ZReader):
         for _ in range(bone_count):
             self.bs.seek(164, 1)
             transform = self.read_matrix()
-            parent_id = self.read_int32()
             self.read_int32()
+            parent_id = self.read_int32()
             self.read_int32()
             self.read_int32()
             name_crc = self.read_int32()
