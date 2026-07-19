@@ -9,7 +9,7 @@ class SubMesh(NamedTuple):
     transform: Matrix
     bone_crcs: tuple[int, int, int, int]
     positions: list[tuple[float, float, float]]
-    unk_attr: list[tuple[int, int, int, int]]
+    weights: list[tuple[float, float, float, float]]
     uvs: list[tuple[float, float]]
     binormals: list[tuple[float, float, float, float]]
     triangles: list[tuple[int, int, int]]
@@ -19,7 +19,7 @@ class MeshZ(NamedTuple):
     flags: int
     crc: int
     transform: Matrix
-    uv_pool: list[tuple[float, float, float]]
+    uv_pool: list[tuple[float, float]]
     normal_pool: list[tuple[float, float, float]]
     unk_attr_pool: list[int]
     submeshes: list[SubMesh]
@@ -92,18 +92,19 @@ class PSPMeshZReader(ZReader):
 
             positions = []
             uvs = []
-            unk_attrs = []
+            weights = []
             binormals = []
 
             # Read vertices
             while self.bs.tell() <= submesh_end_off - 18:
-                unk_attr = struct.unpack("<4b", self.bs.read(4))
-                if unk_attr == (-1, -1, -1, -1):
+                weight_raw = struct.unpack("<4B", self.bs.read(4))
+                if weight_raw == (255, 255, 255, 255):
                     # Skip initial 0xFF bytes
                     continue
-                if unk_attr == (34, -61, 0, 18):
+                if weight_raw == (34, 195, 0, 18):
                     # Stop before consistent unknown data at end of vertex buffer
                     break
+                weight = tuple(val / 256 for val in weight_raw)
 
                 x, y = struct.unpack("<2h", self.bs.read(4))
                 uv = ((x / 2048) - 8.0, (y / 2048) - 8.0)
@@ -114,7 +115,7 @@ class PSPMeshZReader(ZReader):
                 x, y, z = struct.unpack("<3h", self.bs.read(6))
                 pos = (x / 32767, y / 32767, z / 32767)
 
-                unk_attrs.append(unk_attr)
+                weights.append(weight)
                 uvs.append(uv)
                 binormals.append(binormal)
                 positions.append(pos)
@@ -141,7 +142,7 @@ class PSPMeshZReader(ZReader):
                 submesh_transform,
                 bone_crcs,
                 positions,
-                unk_attrs,
+                weights,
                 uvs,
                 binormals,
                 triangles,

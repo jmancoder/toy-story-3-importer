@@ -31,7 +31,7 @@ class PSPAssetImporter(AssetImporter):
             reader = PSPMeshZReader()
             mesh_z = reader.read_mesh_z(f.read())
 
-        for i, submesh in enumerate(mesh_z.submeshes):
+        for submesh in mesh_z.submeshes:
             mesh = bpy.data.meshes.new(str(mesh_z.crc))
             mesh.from_pydata(submesh.positions, [], submesh.triangles)
 
@@ -55,16 +55,11 @@ class PSPAssetImporter(AssetImporter):
             modifier = mesh_obj.modifiers.new("Armature", 'ARMATURE')
             modifier.object = self.armature_obj
 
-            for j, bone_crc in enumerate(submesh.bone_crcs):
-                if bone_crc == -1:
-                    continue
+            vertex_groups = [
+                mesh_obj.vertex_groups.new(name=str(bone_crc))
+                for bone_crc in submesh.bone_crcs
+            ]
 
-                skin_group = self.skin_z.point_group_map[bone_crc]
-                vertex_group = mesh_obj.vertex_groups.new(name=str(bone_crc))
-
-                ids_0 = [skin_group.points_0[i][0] for i in range(len(skin_group.points_0))]
-                ids_1 = [skin_group.points_1[i][0] for i in range(len(skin_group.points_1))]
-                print(f"Mesh {i}, bone {j} skin groups len, range:")
-                print(len(skin_group.points_0), f"{min(ids_0)}-{max(ids_0)}")
-                print(len(skin_group.points_1), f"{min(ids_1)}-{max(ids_1)}")
-            print()
+            for i, weight in enumerate(submesh.weights):
+                for j, vertex_group in enumerate(vertex_groups):
+                    vertex_group.add([i], weight[j], 'ADD')
