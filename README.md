@@ -24,9 +24,8 @@ This Blender add-on allows you to import meshes from the PSP and PS2 versions of
 
 ## TODO
 ### PSP:
-- Bind high-quality UV and normal attribute pools to vertices in Mesh_Z files
-- Read additional data before and after vertex chunks
-- Determine how morph packets in Skin_Z files are used
+- Bind UV and normal attribute pools to the vertices in Mesh_Z files
+- Determine how the index-float pairs in Skin_Z files relate to the attribute pools
 - Import Material_Z files
 ### PS2:
 - Locate and import UVs
