@@ -25,7 +25,7 @@ class SkinZ(NamedTuple):
     attr_group_map: dict[int, list[PacketGroup]]
 
 
-class PSPSkinZReader(ZReader):
+class SkinZReader(ZReader):
     def __init__(self) -> None:
         super().__init__()
 

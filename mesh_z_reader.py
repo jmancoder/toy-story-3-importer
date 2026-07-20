@@ -22,7 +22,7 @@ class MeshZ(NamedTuple):
     submeshes: list[SubMesh]
 
 
-class PSPMeshZReader(ZReader):
+class MeshZReader(ZReader):
     def __init__(self) -> None:
         super().__init__()
 

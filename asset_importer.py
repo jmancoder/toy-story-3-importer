@@ -5,10 +5,10 @@ from bpy.types import Context, Object
 from mathutils import Vector
 from pathlib import Path
 from .skel_z_reader import SkelZReader, SkelZ
-from .psp_mesh_z_reader import PSPMeshZReader
-from .psp_skin_z_reader import PSPSkinZReader, SkinZ
+from .mesh_z_reader import MeshZReader
+from .skin_z_reader import SkinZReader, SkinZ
 
-class PSPAssetImporter:
+class AssetImporter:
     def __init__(self) -> None:
         self.armature_obj: Object | None = None
         self.skel_z: SkelZ | None = None
@@ -50,7 +50,7 @@ class PSPAssetImporter:
 
     def import_skin_z(self, context: Context, file_path: Path) -> None:
         with open(file_path, "rb") as f:
-            reader = PSPSkinZReader()
+            reader = SkinZReader()
             self.skin_z = reader.read_skin_z(f.read())
 
         self.import_skel_z(context,
@@ -64,7 +64,7 @@ class PSPAssetImporter:
 
     def import_mesh_z(self, context: Context, file_path: Path) -> None:
         with open(file_path, "rb") as f:
-            reader = PSPMeshZReader()
+            reader = MeshZReader()
             mesh_z = reader.read_mesh_z(f.read())
 
         for submesh in mesh_z.submeshes:

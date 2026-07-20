@@ -15,7 +15,7 @@ from bpy_extras.io_utils import ImportHelper
 from bpy.props import CollectionProperty, StringProperty
 from bpy.types import Operator, Context, OperatorFileListElement
 from pathlib import Path
-from .psp_asset_importer import PSPAssetImporter
+from .asset_importer import AssetImporter
 
 
 class SkinnedMeshImporter(Operator, ImportHelper):
@@ -41,7 +41,7 @@ class SkinnedMeshImporter(Operator, ImportHelper):
             return {'CANCELLED'}
 
         for file in self.files:
-            importer = PSPAssetImporter()
+            importer = AssetImporter()
             in_path = Path(self.directory) / file.name
             importer.import_skin_z(context, in_path)
 

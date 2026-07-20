@@ -1,5 +1,5 @@
 # Toy Story 3 Importer
-This Blender add-on allows you to import meshes and related assets extracted from the PSP release of Toy Story 3.
+This Blender add-on allows you to import meshes extracted from the PSP release of Toy Story 3.
 
 ## Installation
 1. Download the latest version of this add-on from the [releases](https://github.com/jmancoder/toy-story-3-importer/releases) page. Blender 4.2 and newer is supported.
