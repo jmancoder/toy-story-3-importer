@@ -17,17 +17,37 @@ class ZReader:
             floats[12:16],
         )).transposed()
 
+    def read_uint8(self) -> int:
+        return int.from_bytes(self.bs.read(1),
+            byteorder="little", signed=False)
+    
+    def read_int8(self) -> int:
+        return int.from_bytes(self.bs.read(1),
+            byteorder="little", signed=True)
+
     def read_uint16(self) -> int:
-        return struct.unpack("<H", self.bs.read(2))[0]
+        return int.from_bytes(self.bs.read(2),
+            byteorder="little", signed=False)
 
     def read_int16(self) -> int:
-        return struct.unpack("<h", self.bs.read(2))[0]
+        return int.from_bytes(self.bs.read(2),
+            byteorder="little", signed=True)
+
+    def read_uint24(self) -> int:
+        return int.from_bytes(self.bs.read(3),
+            byteorder="little", signed=False)
+    
+    def read_int24(self) -> int:
+        return int.from_bytes(self.bs.read(3),
+            byteorder="little", signed=True)
 
     def read_uint32(self) -> int:
-        return struct.unpack("<I", self.bs.read(4))[0]
+        return int.from_bytes(self.bs.read(4),
+            byteorder="little", signed=False)
 
     def read_int32(self) -> int:
-        return struct.unpack("<i", self.bs.read(4))[0]
+        return int.from_bytes(self.bs.read(4),
+            byteorder="little", signed=True)
 
     def load_data(self, data: bytes) -> None:
         if len(data) < 4:

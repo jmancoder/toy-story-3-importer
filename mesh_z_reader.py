@@ -25,6 +25,26 @@ class MeshZReader(ZReader):
     def __init__(self) -> None:
         super().__init__()
 
+    def read_triangle_strips(self,
+            positions: list[tuple[float, float, float]]
+            ) -> list[tuple[int, int, int]]:
+        triangles = []
+        flip = True
+        for i in range(len(positions) - 2):
+            a, b, c = positions[i:i+3]
+            if a == b or b == c or a == c:
+                # Skip degenerate triangles formed by repeated positions
+                flip = not flip
+                continue
+
+            if not flip:
+                triangles.append((i, i + 1, i + 2))
+            else:
+                triangles.append((i, i + 2, i + 1))
+            flip = not flip
+
+        return triangles
+
     def read_mesh_z(self, data: bytes) -> MeshZ:
         self.load_data(data)
 
@@ -74,7 +94,7 @@ class MeshZReader(ZReader):
         # Read submeshes
         submesh_count = self.read_uint32()
         submeshes = []
-        for i in range(submesh_count):
+        for _ in range(submesh_count):
             # Read submesh header
             chunk_size_padded = self.read_uint32()
             self.read_uint32()
@@ -85,26 +105,40 @@ class MeshZReader(ZReader):
             submesh_transform = self.read_matrix()
 
             # Read vertex chunk header
-            chunk_start = self.bs.tell()
-            self.read_uint16()
-            self.read_uint16()
-            self.read_uint16()
-            self.read_uint16()
-            chunk_size = self.read_uint16()
-            self.read_uint16()
+            chunk_header_off = self.bs.tell()
+            self.read_uint24()
+            self.read_uint8()
+            self.read_uint24()
+            self.read_uint8()
+            rel_footer_off = self.read_uint24()
+            self.read_uint8()
+
+            # Read vertex chunk footer first
+            self.bs.seek(chunk_header_off + rel_footer_off)
+            self.read_uint24()
+            self.read_uint8()
+            self.read_uint24()
+            self.read_uint8()
+            chunk_header_size = self.read_uint24()
+            self.read_uint8()
+            vertex_count = self.read_uint16()
+            prim_type = self.read_uint8()
+            self.read_uint8()
+            self.read_uint24()
+            self.read_uint8()
+            self.read_uint24()
+            self.read_uint8()
+
+            # Read vertices
+            self.bs.seek(chunk_header_off + chunk_header_size)
 
             positions = []
             uvs = []
             weights = []
             normals = []
-
-            # Read vertices
-            while self.bs.tell() < chunk_start + chunk_size:
-                weight_raw = struct.unpack("<4B", self.bs.read(4))
-                if weight_raw == (255, 255, 255, 255):
-                    # Skip initial 0xFF bytes
-                    continue
-                weight = tuple(val / 128 for val in weight_raw)
+            for _ in range(vertex_count):
+                a, b, c, d = struct.unpack("<4B", self.bs.read(4))
+                weight = (a / 128, b / 128, c / 128, d / 128)
 
                 x, y = struct.unpack("<2h", self.bs.read(4))
                 uv = ((x / 2048) - 8.0, (y / 2048) - 8.0)
@@ -120,36 +154,25 @@ class MeshZReader(ZReader):
                 normals.append(normal)
                 positions.append(pos)
 
-            # Read vertex chunk footer
-            self.read_uint16()
-            self.read_uint16()
-            self.read_uint16()
-            self.read_uint16()
-            unk_flag = self.read_uint16()
-            self.read_uint16()
-            vertex_count = self.read_uint16()
-            self.read_uint16()
-            self.read_uint16()
-            self.read_uint16()
-            self.read_uint16()
-            self.read_uint16()
-            self.bs.seek(chunk_start + chunk_size_padded)
+            # Skip to next vertex chunk
+            self.bs.seek(chunk_header_off + chunk_size_padded)
 
-            # Generate triangles from strip-ordered positions
-            triangles = []
-            flip = True
-            for i in range(len(positions) - 2):
-                a, b, c = positions[i:i+3]
-                if a == b or b == c or a == c:
-                    # Skip degenerate triangles formed by repeated vertices
-                    flip = not flip
-                    continue
-
-                if not flip:
-                    triangles.append((i, i + 1, i + 2))
-                else:
-                    triangles.append((i, i + 2, i + 1))
-                flip = not flip
+            # Generate triangles according to the primitive type
+            if prim_type < 3:
+                triangles = []
+            elif prim_type == 3:
+                triangles = [(i, i+2, i+1) for i in range(0, vertex_count, 3)]
+            elif prim_type == 4:
+                triangles = self.read_triangle_strips(positions)
+            elif prim_type == 5:
+                triangles = []
+                print("Warning: Triangle fan primitives are unimplemented.")
+            elif prim_type == 6:
+                triangles = []
+                print("Warning: Sprite primitives are unimplemented.")
+            else:
+                triangles = []
+                print("Warning: Unknown primitive type", prim_type)
 
             submeshes.append(SubMesh(
                 submesh_transform,
