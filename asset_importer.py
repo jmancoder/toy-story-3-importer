@@ -9,8 +9,8 @@ from .skel_z_reader import SkelZReader, SkelZ
 
 class AssetImporter:
     def __init__(self) -> None:
-        self.armature_obj: Object
-        self.skel_z: SkelZ
+        self.armature_obj: Object | None = None
+        self.skel_z: SkelZ | None = None
 
     def import_skel_z(self, context: Context, file_path: Path) -> None:
         with open(file_path, "rb") as f:

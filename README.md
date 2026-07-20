@@ -8,14 +8,9 @@ This Blender add-on allows you to import meshes from the PSP and PS2 versions of
 
 ## Usage
 1. Extract the desired .dps file with BigFile Friend (bff): <https://github.com/widberg/bff/releases/tag/v0.1.0>.
-2. If a Skin_Z file is present:
-    1. Click *File->Import->TS3 Skinned Mesh (.Skin_Z)*.
-    2. Set the *Game Platform* option to match the game you extracted the asset from.
-    3. Select the Skin_Z file and click *Import Skin_Z*. Corresponding Skel_Z and Mesh_Z files will be imported automatically.
-3. If a Skin_Z file is not present:
-    1. Click *File->Import->TS3 Static Mesh (.Mesh_Z)*.
-    2. Set the *Game Platform* option to match the game you extracted the asset from.
-    3. Select the Mesh_Z file and click *Import Mesh_Z*.
+2. Click *File->Import->TS3 Skinned Mesh (.Skin_Z)*.
+3. Set the *Game Platform* option to match the game you extracted the asset from.
+4. Select the Skin_Z file and click *Import Skin_Z*. Associated Skel_Z and Mesh_Z files will be imported automatically.
 
 ## Features
 ### Shared:

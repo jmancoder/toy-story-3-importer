@@ -2,6 +2,7 @@ import bpy
 
 from bpy.types import Context
 from pathlib import Path
+from mathutils import Vector
 from .asset_importer import AssetImporter
 from .psp_mesh_z_reader import PSPMeshZReader
 from .psp_skin_z_reader import PSPSkinZReader, SkinZ
@@ -21,12 +22,10 @@ class PSPAssetImporter(AssetImporter):
         for mesh_crc in self.skin_z.mesh_crcs:
             self.import_mesh_z(
                 context,
-                file_path.parent / f"{str(mesh_crc)}.Mesh_Z",
-                skinned=True
+                file_path.parent / f"{str(mesh_crc)}.Mesh_Z"
             )
 
-    def import_mesh_z(self, context: Context,
-            file_path: Path, skinned=False) -> None:
+    def import_mesh_z(self, context: Context, file_path: Path) -> None:
         with open(file_path, "rb") as f:
             reader = PSPMeshZReader()
             mesh_z = reader.read_mesh_z(f.read())
@@ -38,7 +37,7 @@ class PSPAssetImporter(AssetImporter):
             # Import UVs
             uv_layer = mesh.uv_layers.new(name=f"UV0")
             for loop in mesh.loops:
-                uv = submesh.uvs[loop.vertex_index][:2]
+                uv = submesh.uvs[loop.vertex_index]
                 uv_layer.data[loop.index].uv = (uv[0], 1.0 - uv[1])
 
             mesh.validate()
@@ -48,16 +47,18 @@ class PSPAssetImporter(AssetImporter):
             mesh_obj.matrix_basis = submesh.transform
             context.collection.objects.link(mesh_obj)
 
-            if not skinned:
+            if not self.armature_obj or not self.skel_z:
                 return
 
             mesh_obj.parent = self.armature_obj
             modifier = mesh_obj.modifiers.new("Armature", 'ARMATURE')
             modifier.object = self.armature_obj
 
+            # Create and populate vertex groups
             vertex_groups = [
                 mesh_obj.vertex_groups.new(name=str(bone_crc))
                 for bone_crc in submesh.bone_crcs
+                if bone_crc != -1
             ]
 
             for i, weight in enumerate(submesh.weights):

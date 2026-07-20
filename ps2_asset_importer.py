@@ -9,31 +9,32 @@ from .ps2_mesh_data_z_reader import PS2MeshDataZReader
 
 
 class PS2AssetImporter(AssetImporter):
+    def __init__(self) -> None:
+        super().__init__()
+
     def import_skin_z(self, context: Context, file_path: Path) -> None:
         with open(file_path, "rb") as f:
             reader = PS2SkinZReader()
             skin_z = reader.read_skin_z(f.read())
 
-        skinned = skin_z.skel_crc != 0
-        if skinned:
+        if skin_z.skel_crc != 0:
             skel_z_path = file_path.parent / f"{skin_z.skel_crc}.Skel_Z"
             self.import_skel_z(context, skel_z_path)
 
         for mesh_crc in skin_z.mesh_crcs:
             mesh_path = file_path.parent / f"{mesh_crc}.Mesh_Z"
-            self.import_mesh_z(context, mesh_path, skinned)
+            self.import_mesh_z(context, mesh_path)
 
     def import_mesh_z(self, context: Context,
-            file_path: Path, skinned = False) -> None:
+            file_path: Path) -> None:
         with open(file_path, "rb") as f:
             reader = PS2MeshZReader()
             mesh_z = reader.read_mesh_z(f.read())
 
         mesh_data_path = file_path.parent / f"{mesh_z.mesh_data_crc}.MeshData_Z"
-        self.import_mesh_data_z(context, mesh_data_path, skinned)
+        self.import_mesh_data_z(context, mesh_data_path)
 
-    def import_mesh_data_z(self, context: Context,
-            file_path: Path, skinned = False) -> None:
+    def import_mesh_data_z(self, context: Context, file_path: Path) -> None:
         with open(file_path, "rb") as f:
             reader = PS2MeshDataZReader()
             mesh_data_z = reader.read_mesh_data_z(f.read())
@@ -74,7 +75,7 @@ class PS2AssetImporter(AssetImporter):
         mesh_obj = bpy.data.objects.new(str(mesh_data_z.crc), mesh)
         context.collection.objects.link(mesh_obj)
 
-        if not skinned:
+        if not self.armature_obj or not self.skel_z:
             return
 
         mesh_obj.parent = self.armature_obj

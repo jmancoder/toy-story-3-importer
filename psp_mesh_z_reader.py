@@ -79,7 +79,8 @@ class PSPMeshZReader(ZReader):
         submesh_count = self.read_uint32()
         submeshes = []
         for i in range(submesh_count):
-            vertex_chunk_size = self.read_uint32()
+            # Read submesh header
+            chunk_size_padded = self.read_uint32()
             self.read_uint32()
             bone_crcs = struct.unpack("<4i", self.bs.read(16))
             self.read_uint32()
@@ -87,8 +88,14 @@ class PSPMeshZReader(ZReader):
             self.read_uint32()
             submesh_transform = self.read_matrix()
 
-            submesh_end_off = self.bs.tell() + vertex_chunk_size
-            self.bs.seek(12, 1)
+            # Read vertex chunk header
+            chunk_start = self.bs.tell()
+            self.read_uint16()
+            self.read_uint16()
+            self.read_uint16()
+            self.read_uint16()
+            chunk_size = self.read_uint16()
+            self.read_uint16()
 
             positions = []
             uvs = []
@@ -96,14 +103,11 @@ class PSPMeshZReader(ZReader):
             binormals = []
 
             # Read vertices
-            while self.bs.tell() <= submesh_end_off - 18:
+            while self.bs.tell() < chunk_start + chunk_size:
                 weight_raw = struct.unpack("<4B", self.bs.read(4))
                 if weight_raw == (255, 255, 255, 255):
                     # Skip initial 0xFF bytes
                     continue
-                if weight_raw == (34, 195, 0, 18):
-                    # Stop before consistent unknown data at end of vertex buffer
-                    break
                 weight = tuple(val / 128 for val in weight_raw)
 
                 x, y = struct.unpack("<2h", self.bs.read(4))
@@ -120,7 +124,20 @@ class PSPMeshZReader(ZReader):
                 binormals.append(binormal)
                 positions.append(pos)
 
-            self.bs.seek(submesh_end_off)
+            # Read vertex chunk footer
+            self.read_uint16()
+            self.read_uint16()
+            self.read_uint16()
+            self.read_uint16()
+            unk_flag = self.read_uint16()
+            self.read_uint16()
+            vertex_count = self.read_uint16()
+            self.read_uint16()
+            self.read_uint16()
+            self.read_uint16()
+            self.read_uint16()
+            self.read_uint16()
+            self.bs.seek(chunk_start + chunk_size_padded)
 
             # Generate triangles from strip-ordered positions
             triangles = []

@@ -5,17 +5,15 @@ from typing import NamedTuple
 from .z_reader import ZReader
 
 
-class MorphPacket(NamedTuple):
+class AttributePacket(NamedTuple):
     vertex_id: int
     weight: float
 
 
-class MorphGroup(NamedTuple):
-    unk_0: int
-    unk_1: int
-    unk_2: int
-    morph_packets_0: list[MorphPacket]
-    morph_packets_1: list[MorphPacket]
+class PacketGroup(NamedTuple):
+    unknown: int
+    packets_0: list[AttributePacket]
+    packets_1: list[AttributePacket]
 
 
 class SkinZ(NamedTuple):
@@ -24,7 +22,7 @@ class SkinZ(NamedTuple):
     skel_crc: int
     transform: Matrix
     mesh_crcs: list[int]
-    morph_group_map: dict[int, MorphGroup]
+    attr_group_map: dict[int, list[PacketGroup]]
 
 
 class PSPSkinZReader(ZReader):
@@ -52,34 +50,30 @@ class PSPSkinZReader(ZReader):
         ]
         self.read_uint32()
 
-        # Read entry groups
+        # Read attribute packet groups
         group_count = self.read_uint32()
-        morph_group_map = {}
+        attrib_group_map = {}
         for _ in range(group_count):
             group_crc = self.read_int32()
-            unk_0 = self.read_int16()
-            unk_1 = self.read_int16()
-            unk_2 = self.read_int16()
+            packet_group_count = self.read_uint32()
 
-            packet_count_0 = self.read_uint32()
-            packets_0 = [
-                MorphPacket(*struct.unpack("<If", self.bs.read(8)))
-                for _ in range(packet_count_0)
-            ]
+            packet_groups = []
+            for _ in range(packet_group_count):
+                unk_1 = self.read_uint16()
+                packet_count_0 = self.read_uint32()
+                packets_0 = [
+                    AttributePacket(*struct.unpack("<If", self.bs.read(8)))
+                    for _ in range(packet_count_0)
+                ]
+                packet_count_1 = self.read_uint32()
+                packets_1 = [
+                    AttributePacket(*struct.unpack("<If", self.bs.read(8)))
+                    for _ in range(packet_count_1)
+                ]
 
-            packet_count_1 = self.read_uint32()
-            packets_1 = [
-                MorphPacket(*struct.unpack("<If", self.bs.read(8)))
-                for _ in range(packet_count_1)
-            ]
+                packet_groups.append(PacketGroup(unk_1, packets_0, packets_1))
 
-            morph_group_map[group_crc] = MorphGroup(
-                unk_0,
-                unk_1,
-                unk_2,
-                packets_0,
-                packets_1,
-            )
+            attrib_group_map[group_crc] = packet_groups
 
         return SkinZ(
             skin_flags,
@@ -87,5 +81,5 @@ class PSPSkinZReader(ZReader):
             skel_crc,
             skin_transform,
             mesh_crcs,
-            morph_group_map,
+            attrib_group_map,
         )
