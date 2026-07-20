@@ -12,7 +12,6 @@ class BoneData(NamedTuple):
 
 
 class SkelZ(NamedTuple):
-    flags: int
     crc: int
     bones: list[BoneData]
 
@@ -26,7 +25,7 @@ class SkelZReader(ZReader):
         self.load_data(data)
 
         self.bs.seek(0x10)
-        skel_flags = self.read_uint32()
+        class_crc = self.read_int32()
         skel_crc = self.read_int32()
         unk_crc = self.read_int32()
         self.read_uint16()
@@ -52,14 +51,12 @@ class SkelZReader(ZReader):
         mesh_data_count = self.read_uint32()
         mesh_data_crcs = [self.read_int32() for _ in range(mesh_data_count)]
 
+        # unk_count = self.read_uint32()
+
         # bone_crc_count_0 = self.read_uint32()
         # bone_crcs_0 = [self.read_int32() for _ in range(bone_crc_count_0)]
 
         # bone_crc_count_1 = self.read_uint32()
         # bone_crcs_1 = [self.read_int32() for _ in range(bone_crc_count_1)]
 
-        return SkelZ(
-            skel_flags,
-            skel_crc,
-            bones,
-        )
+        return SkelZ(skel_crc, bones)

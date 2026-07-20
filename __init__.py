@@ -12,8 +12,10 @@ bl_info = {
 import bpy
 
 from bpy_extras.io_utils import ImportHelper
-from bpy.props import CollectionProperty, StringProperty
+from bpy.props import CollectionProperty, FloatProperty
+from bpy.props import FloatVectorProperty, StringProperty
 from bpy.types import Operator, Context, OperatorFileListElement
+from mathutils import Vector
 from pathlib import Path
 from .asset_importer import AssetImporter
 
@@ -31,17 +33,37 @@ class SkinnedMeshImporter(Operator, ImportHelper):
     )
 
     directory: StringProperty(
-        subtype='DIR_PATH', options={'SKIP_SAVE', 'HIDDEN'})
+        subtype='DIR_PATH',
+        options={'SKIP_SAVE', 'HIDDEN'},
+    )
 
     files: CollectionProperty(
-        type=OperatorFileListElement, options={'SKIP_SAVE', 'HIDDEN'})
+        type=OperatorFileListElement,
+        options={'SKIP_SAVE', 'HIDDEN'},
+    )
+
+    batch_offset: FloatVectorProperty(
+        name="Batch Offset",
+        description="Offset applied after each batch "
+            "import to avoid overlapping.",
+        default=Vector((1.0, 0.0, 0.0)),
+        size=3,
+        subtype='TRANSLATION',
+    )
+
+    min_bone_length: FloatProperty(
+        name="Min Bone Length",
+        description="Smallest bone length allowed.",
+        default=0.01,
+    )
 
     def execute(self, context: Context):
         if not self.directory:
             return {'CANCELLED'}
 
+        importer = AssetImporter(
+            self.min_bone_length, self.batch_offset)
         for file in self.files:
-            importer = AssetImporter()
             in_path = Path(self.directory) / file.name
             importer.import_skin_z(context, in_path)
 

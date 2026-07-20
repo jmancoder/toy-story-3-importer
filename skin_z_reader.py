@@ -17,7 +17,6 @@ class PacketGroup(NamedTuple):
 
 
 class SkinZ(NamedTuple):
-    flags: int
     crc: int
     skel_crc: int
     transform: Matrix
@@ -33,9 +32,9 @@ class SkinZReader(ZReader):
         super().load_data(data)
 
         self.bs.seek(0x10)
-        skin_flags = self.read_uint32()
+        class_crc = self.read_int32()
         skin_crc = self.read_int32()
-        unk_crc = self.read_int32()
+        link_crc = self.read_int32()
         skel_crc = self.read_int32()
 
         bounds = struct.unpack("<4f", self.bs.read(16))
@@ -76,7 +75,6 @@ class SkinZReader(ZReader):
             attrib_group_map[group_crc] = packet_groups
 
         return SkinZ(
-            skin_flags,
             skin_crc,
             skel_crc,
             skin_transform,

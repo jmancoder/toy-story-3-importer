@@ -16,7 +16,6 @@ class SubMesh(NamedTuple):
 
 
 class MeshZ(NamedTuple):
-    flags: int
     crc: int
     transform: Matrix
     submeshes: list[SubMesh]
@@ -30,10 +29,10 @@ class MeshZReader(ZReader):
         self.load_data(data)
 
         self.bs.seek(0x10)
-        mesh_flags = self.read_uint32()
+        class_crc = self.read_int32()
         mesh_crc = self.read_int32()
-        self.read_int32()
-        linked_mesh_data_crc = self.read_int32()
+        link_crc = self.read_int32()
+        main_mesh_data_crc = self.read_int32()
 
         bounds = struct.unpack("<4f", self.bs.read(16))
         mesh_transform = self.read_matrix()
@@ -166,7 +165,6 @@ class MeshZReader(ZReader):
         unk_crcs = [self.read_int32() for _ in range(unk_crc_count)]
 
         return MeshZ(
-            mesh_flags,
             mesh_crc,
             mesh_transform,
             submeshes,

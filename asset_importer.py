@@ -9,10 +9,40 @@ from .mesh_z_reader import MeshZReader
 from .skin_z_reader import SkinZReader, SkinZ
 
 class AssetImporter:
-    def __init__(self) -> None:
-        self.armature_obj: Object | None = None
+    def __init__(self, min_bone_length: float, batch_offset: Vector) -> None:
+        self.batch_offset = batch_offset
+        self.min_bone_length = min_bone_length
+        self.armature_counter = 0
+        self.skin_z: SkinZ | None = None
         self.skel_z: SkelZ | None = None
-        self.skin_z: SkinZ
+        self.armature_obj: Object | None = None
+
+    def import_skin_z(self, context: Context, file_path: Path) -> None:
+        with open(file_path, "rb") as f:
+            reader = SkinZReader()
+            self.skin_z = reader.read_skin_z(f.read())
+
+        self.import_skel_z(context,
+            file_path.parent / f"{str(self.skin_z.skel_crc)}.Skel_Z")
+
+        for mesh_crc in self.skin_z.mesh_crcs:
+            self.import_mesh_z(
+                context,
+                file_path.parent / f"{str(mesh_crc)}.Mesh_Z"
+            )
+
+        # Offset batch-imported models to avoid overlapping
+        if self.armature_obj:
+            self.armature_obj.location += Vector((
+                self.batch_offset.x * self.armature_counter,
+                self.batch_offset.y * self.armature_counter,
+                self.batch_offset.z * self.armature_counter,
+            ))
+            self.armature_counter += 1
+
+        self.skin_z = None
+        self.skel_z = None
+        self.armature_obj = None
 
     def import_skel_z(self, context: Context, file_path: Path) -> None:
         with open(file_path, "rb") as f:
@@ -41,26 +71,12 @@ class AssetImporter:
                 bone.parent = armature.edit_bones[bone_data.parent_id]
 
                 parent_distance = (bone.head - bone.parent.head).length
-                bone.length = max(parent_distance, 0.01)
+                bone.length = max(parent_distance, self.min_bone_length)
 
         bpy.ops.object.mode_set(mode="OBJECT")
 
         self.skel_z = skel_z
         self.armature_obj = armature_obj
-
-    def import_skin_z(self, context: Context, file_path: Path) -> None:
-        with open(file_path, "rb") as f:
-            reader = SkinZReader()
-            self.skin_z = reader.read_skin_z(f.read())
-
-        self.import_skel_z(context,
-            file_path.parent / f"{str(self.skin_z.skel_crc)}.Skel_Z")
-
-        for mesh_crc in self.skin_z.mesh_crcs:
-            self.import_mesh_z(
-                context,
-                file_path.parent / f"{str(mesh_crc)}.Mesh_Z"
-            )
 
     def import_mesh_z(self, context: Context, file_path: Path) -> None:
         with open(file_path, "rb") as f:
