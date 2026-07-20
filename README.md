@@ -13,10 +13,10 @@ This Blender add-on allows you to import meshes extracted from the PSP release o
 
 ## Features
 - Import vertex positions and attributes from Mesh_Z files
-- Generate triangles from vertex positions using triangle strip-style ordering
+- Generate triangles and triangle strips from vertex positions
 - Import vertex groups and bone weights
 - Import bones from Skel_Z files
-- Import multiple meshes at once
+- Import multiple meshes at once with an adjustable offset
 
 ## TODO
 - Determine the purpose of the int-float pairs in Skin_Z files
