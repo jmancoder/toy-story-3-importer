@@ -2,7 +2,6 @@ import bpy
 
 from bpy.types import Context
 from pathlib import Path
-from mathutils import Vector
 from .asset_importer import AssetImporter
 from .psp_mesh_z_reader import PSPMeshZReader
 from .psp_skin_z_reader import PSPSkinZReader, SkinZ
@@ -39,6 +38,9 @@ class PSPAssetImporter(AssetImporter):
             for loop in mesh.loops:
                 uv = submesh.uvs[loop.vertex_index]
                 uv_layer.data[loop.index].uv = (uv[0], 1.0 - uv[1])
+
+            # Import normals
+            mesh.normals_split_custom_set_from_vertices(submesh.normals)
 
             mesh.validate()
             mesh.update()

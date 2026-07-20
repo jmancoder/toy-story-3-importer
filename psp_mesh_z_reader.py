@@ -11,7 +11,7 @@ class SubMesh(NamedTuple):
     positions: list[tuple[float, float, float]]
     weights: list[tuple[float, float, float, float]]
     uvs: list[tuple[float, float]]
-    binormals: list[tuple[float, float, float, float]]
+    normals: list[tuple[float, float, float, float]]
     triangles: list[tuple[int, int, int]]
 
 
@@ -19,9 +19,6 @@ class MeshZ(NamedTuple):
     flags: int
     crc: int
     transform: Matrix
-    uv_pool: list[tuple[float, float]]
-    normal_pool: list[tuple[float, float, float]]
-    unk_attr_pool: list[int]
     submeshes: list[SubMesh]
 
 
@@ -49,7 +46,7 @@ class PSPMeshZReader(ZReader):
         # Potentially unreliable skip
         self.bs.seek(24, 1)
 
-        # Read attribute pools
+        # Read unused attribute pools
         uv_count = self.read_uint32()
         uv_pool = [
             struct.unpack("<2f", self.bs.read(8))
@@ -100,7 +97,7 @@ class PSPMeshZReader(ZReader):
             positions = []
             uvs = []
             weights = []
-            binormals = []
+            normals = []
 
             # Read vertices
             while self.bs.tell() < chunk_start + chunk_size:
@@ -113,15 +110,15 @@ class PSPMeshZReader(ZReader):
                 x, y = struct.unpack("<2h", self.bs.read(4))
                 uv = ((x / 2048) - 8.0, (y / 2048) - 8.0)
 
-                x, y, z, w = struct.unpack("<4B", self.bs.read(4))
-                binormal = (x / 255, y / 255, z / 255, w / 255)
+                x, y, z, w = struct.unpack("<4b", self.bs.read(4))
+                normal = (x / 128, y / 128, z / 128)
 
                 x, y, z = struct.unpack("<3h", self.bs.read(6))
                 pos = (x / 32767, y / 32767, z / 32767)
 
                 weights.append(weight)
                 uvs.append(uv)
-                binormals.append(binormal)
+                normals.append(normal)
                 positions.append(pos)
 
             # Read vertex chunk footer
@@ -161,7 +158,7 @@ class PSPMeshZReader(ZReader):
                 positions,
                 weights,
                 uvs,
-                binormals,
+                normals,
                 triangles,
             ))
 
@@ -172,8 +169,5 @@ class PSPMeshZReader(ZReader):
             mesh_flags,
             mesh_crc,
             mesh_transform,
-            uv_pool,
-            normal_pool,
-            unk_attr_pool,
             submeshes,
         )
