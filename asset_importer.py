@@ -114,7 +114,6 @@ class AssetImporter:
             vertex_groups = [
                 mesh_obj.vertex_groups.new(name=str(bone_crc))
                 for bone_crc in submesh.bone_crcs
-                if bone_crc != -1
             ]
 
             for i, weight in enumerate(submesh.weights):
